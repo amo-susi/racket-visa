@@ -6,6 +6,8 @@
          vi-open
          vi-write
          vi-read
+         vi-read-stb
+         vi-read-to-file
          vi-close
          vi-gpib-control-ren)
 
@@ -45,11 +47,11 @@
 (define vi-buf-read
   (get-ffi-obj "viBufRead" visa-lib
                (_fun (vi : _uint32)
-                     (buf : (_ptr o _string))
+                     (buf : _gcpointer)
                      (count : _uint32)
                      (retCount : (_ptr o _uint32))
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf retCount))))
+                     -> (values ViStatus retCount))))
 
 ;; Writes data to a formatted I/O write buffer synchronously.
 (define vi-buf-write
@@ -134,7 +136,6 @@
                (_fun (vi : _uint32)
                      (mask : _uint16)
                      -> (ViStatus : _long))))
-
 
 ;; Retrieves the state of an attribute.
 (define vi-get-attribute
@@ -304,27 +305,30 @@
                (_fun (vi : _uint32)
                      (space : _uint16)
                      (offset : _long)
-                     (buf : (_ptr o _uint8))
+                     (length : _long)
+                     (buf8 : (_ptr o _uint8))
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf))))
+                     -> (values ViStatus buf8))))
 
 (define vi-move-in16
   (get-ffi-obj "viMoveIn16" visa-lib
                (_fun (vi : _uint32)
                      (space : _uint16)
                      (offset : _long)
-                     (buf : (_ptr o _uint16))
+                     (length : _long)
+                     (buf16 : (_ptr o _uint16))
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf))))
+                     -> (values ViStatus buf16))))
 
 (define vi-move-in32
   (get-ffi-obj "viMoveIn32" visa-lib
                (_fun (vi : _uint32)
                      (space : _uint16)
                      (offset : _long)
-                     (buf : (_ptr o _uint32))
+                     (length : _long)
+                     (buf32 : (_ptr o _uint32))
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf))))
+                     -> (values ViStatus buf32))))
 
 ;; Moves a block of data from local memory to the specified address space and offset.
 (define vi-move-out8
@@ -410,7 +414,7 @@
 ;; Parse a resource string to get extended interface information.
 (define vi-parse-rsrc-ex
   (get-ffi-obj "viParseRsrcEx" visa-lib
-               (_fun (sesn : _uint32)
+               (_fun (rmSesn : _uint32)
                      (rsrcName : _string)
                      (intfType : (_ptr o _uint16))
                      (intfNum : (_ptr o _uint16))
@@ -426,7 +430,7 @@
 (define vi-peek8
   (get-ffi-obj "viPeek8" visa-lib
                (_fun (vi : _uint32)
-                     (addr : (_ptr i _void))
+                     (addr : _long)
                      (val8 : (_ptr o _uint8))
                      -> (ViStatus : _void)
                      -> (values ViStatus val8))))
@@ -434,7 +438,7 @@
 (define vi-peek16
   (get-ffi-obj "viPeek16" visa-lib
                (_fun (vi : _uint32)
-                     (addr : (_ptr i _void))
+                     (addr : _long)
                      (val16 : (_ptr o _uint16))
                      -> (ViStatus : _void)
                      -> (values ViStatus val16))))
@@ -442,7 +446,7 @@
 (define vi-peek32
   (get-ffi-obj "viPeek32" visa-lib
                (_fun (vi : _uint32)
-                     (addr : (_ptr i _void))
+                     (addr : _long)
                      (val32 : (_ptr o _uint32))
                      -> (ViStatus : _void)
                      -> (values ViStatus val32))))
@@ -469,6 +473,7 @@
                      (val32 : _uint32)
                      -> (ViStatus : _void))))
 
+#|
 ;; Converts, formats, and sends the parameters (designated by ...) to the device as specified by the format string.
 (define vi-printf
   (get-ffi-obj "viPrintf" visa-lib
@@ -483,26 +488,26 @@
                      (writeFmt : _string)
                      (readFmt : _string)
                      -> (ViStatus : _long))))
+|#
 
 ;; Reads data from device or interface synchronously.
-(define vi-read
-  (get-ffi-obj "viRead" visa-lib
-               (_fun (vi : _uint32)
-                     (buf : (_ptr o _string))
-                     (count : _uint32)
-                     (retCount : (_ptr o _uint32))
-                     -> (ViStatus : _long)
-                     -> (values ViStatus buf retCount))))
+(define vi-read (get-ffi-obj "viRead" visa-lib
+                             (_fun (vi : _uint32)
+                                   (buf : _gcpointer)
+                                   (count : _uint32)
+                                   (retCount : (_ptr o _uint32))
+                                   -> (ViStatus : _long)
+                                   -> (values ViStatus retCount))))
 
 ;; Reads data from device or interface asynchronously.
 (define vi-read-async
   (get-ffi-obj "viReadAsync" visa-lib
                (_fun (vi : _uint32)
-                     (buf : (_ptr o _string))
+                     (buf : _gcpointer)
                      (count : _uint32)
                      (jobId : (_ptr o _long))
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf jobId))))
+                     -> (values ViStatus jobId))))
 
 ;; Reads a status byte of the service request.
 (define vi-read-stb
@@ -522,15 +527,17 @@
                      -> (ViStatus : _long)
                      -> (values ViStatus retCount))))
 
+#|
 ;; Reads, converts, and formats data using the format specifier. Stores the formatted data in the parameters (designated by ...).
 (define vi-scanf
   (get-ffi-obj "viScanf" visa-lib
                (_fun (vi : _uint32)
                      (readFmt : _string)
                      -> (ViStatus : _long))))
+|#
 
 ;; Sets the state of an attribute.
-(define vi-ste-attribute
+(define vi-set-attribute
   (get-ffi-obj "viSetAttribute" visa-lib
                (_fun (vi : _uint32)
                      (attribute : _uint32)
@@ -544,6 +551,8 @@
                      (mask : _uint16)
                      (size : _uint32)
                      -> (ViStatus : _long))))
+
+#|
 ;; Converts, formats, and sends the parameters (designated by ...) to a user-specified buffer as specified by the format string.
 (define vi-sprintf
   (get-ffi-obj "viSPrintf" visa-lib
@@ -560,6 +569,7 @@
                      (buf : _string)
                      (readFmt : _string)
                      -> (ViStatus : _long))))
+|#
 
 ;; Returns a user-readable description of the status code passed to the operation.
 (define vi-status-desc
@@ -578,6 +588,7 @@
                      (jobId : _long)
                      -> (ViStatus : _long))))
 
+#|
 ;; Uninstalls handlers for events.
 (define vi-uninstall-handler
   (get-ffi-obj "viUninstallHandler" visa-lib
@@ -586,6 +597,7 @@
                      (handler : (_ptr i _void))
                      (userHandle : (_ptr i _void))
                      -> (ViStatus : _long))))
+|#
 
 ;; Relinquishes a lock for the specified resource.
 (define vi-unlock
@@ -660,17 +672,17 @@
                      -> (ViStatus : _long))))
 
 ;; Converts, formats, and sends the parameters designated by params to a user-specified buffer as specified by the format string.
-(define vi-vsprintf
+(define vi-vs-printf
   (get-ffi-obj "viVSPrintf" visa-lib
                (_fun (vi : _uint32)
-                     (buf : (_ptr o _string))
+                     (buf : _gcpointer)
                      (writeFmt : _string)
                      (params : _pointer)
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf))))
+                     -> (values ViStatus))))
 
 ;; Reads, converts, and formats data from a user-specified buffer using the format specifier. Stores the formatted data in the parameters designated by params.
-(define vi-vsscanf
+(define vi-vs-scanf
   (get-ffi-obj "viVSScanf" visa-lib
                (_fun (vi : _uint32)
                      (buf : _string)
