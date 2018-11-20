@@ -11,8 +11,6 @@
          vi-close
          vi-gpib-control-ren)
 
-(define bufsize 256)
-
 ;;; library
 (define-runtime-path visa32-library-path
   (case (system-type)
@@ -49,11 +47,11 @@
 (define vi-buf-read
   (get-ffi-obj "viBufRead" visa-lib
                (_fun (vi : _uint32)
-                     (buf : (_ptr o (_array/vector _byte bufsize)))
+                     (buf : _gcpointer)
                      (count : _uint32)
                      (retCount : (_ptr o _uint32))
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf retCount))))
+                     -> (values ViStatus retCount))))
 
 ;; Writes data to a formatted I/O write buffer synchronously.
 (define vi-buf-write
@@ -495,21 +493,21 @@
 ;; Reads data from device or interface synchronously.
 (define vi-read (get-ffi-obj "viRead" visa-lib
                              (_fun (vi : _uint32)
-                                   (buf : (_ptr o (_array/vector _byte bufsize)))
+                                   (buf : _gcpointer)
                                    (count : _uint32)
                                    (retCount : (_ptr o _uint32))
                                    -> (ViStatus : _long)
-                                   -> (values ViStatus buf retCount))))
+                                   -> (values ViStatus retCount))))
 
 ;; Reads data from device or interface asynchronously.
 (define vi-read-async
   (get-ffi-obj "viReadAsync" visa-lib
                (_fun (vi : _uint32)
-                     (buf : (_ptr o (_array/vector _byte bufsize)))
+                     (buf : _gcpointer)
                      (count : _uint32)
                      (jobId : (_ptr o _long))
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf jobId))))
+                     -> (values ViStatus jobId))))
 
 ;; Reads a status byte of the service request.
 (define vi-read-stb
@@ -677,11 +675,11 @@
 (define vi-vs-printf
   (get-ffi-obj "viVSPrintf" visa-lib
                (_fun (vi : _uint32)
-                     (buf : (_ptr o (_array/vector _byte bufsize)))
+                     (buf : _gcpointer)
                      (writeFmt : _string)
                      (params : _pointer)
                      -> (ViStatus : _long)
-                     -> (values ViStatus buf))))
+                     -> (values ViStatus))))
 
 ;; Reads, converts, and formats data from a user-specified buffer using the format specifier. Stores the formatted data in the parameters designated by params.
 (define vi-vs-scanf
